@@ -4,7 +4,7 @@ import requests
 class handler(BaseHTTPRequestHandler):
     def do_POST(self):
         try:
-            key=os.environ.get("GROQ_API_KEY")
+            key=os.environ.get("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")
             if not key: raise ValueError("Adicione GROQ_API_KEY nas variáveis de ambiente do Vercel.")
             n=int(self.headers.get("Content-Length","0"))
             if n>30000: raise ValueError("Pedido muito grande.")
