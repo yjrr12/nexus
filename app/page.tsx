@@ -7,7 +7,13 @@ const assets=["PETR4.SA","VALE3.SA","ITUB4.SA","AAPL","NVDA","MSFT","TSLA","AMZN
 export default function Home(){
  const [symbol,setSymbol]=useState("PETR4.SA"),[period,setPeriod]=useState("6mo"),[interval,setInterval]=useState("1d"),[data,setData]=useState<Market|null>(null),[err,setErr]=useState(""),[busy,setBusy]=useState(false),[tab,setTab]=useState("dashboard"),[updated,setUpdated]=useState(""),[messages,setMessages]=useState<{role:string;content:string}[]>([]),[prompt,setPrompt]=useState(""),[chatBusy,setChatBusy]=useState(false);
  const load=useCallback(async()=>{setBusy(true);setErr("");try{const q=new URLSearchParams({symbol,period,interval});const r=await fetch("/api/market?"+q,{cache:"no-store"});const j=await r.json();if(!r.ok)throw Error(j.error);setData(j);setUpdated(new Date().toLocaleString("pt-BR"));}catch(e){setErr(e instanceof Error?e.message:"Falha ao carregar dados");}finally{setBusy(false);}},[symbol,period,interval]);
- useEffect(()=>{void load()},[load]); useEffect(()=>{const id=setInterval(()=>void load(),300000);return()=>clearInterval(id)},[load]);
+ useEffect(() => {
+  const timer = window.setInterval(() => {
+    void load();
+  }, 300000);
+
+  return () => window.clearInterval(timer);
+}, [load]);
  async function send(){const text=prompt.trim();if(!text||chatBusy)return;const next=[...messages,{role:"user",content:text}];setMessages(next);setPrompt("");setChatBusy(true);try{const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:next,symbol,marketContext:data?.candles.slice(-20)??[]})});const j=await r.json();if(!r.ok)throw Error(j.error);setMessages([...next,{role:"assistant",content:j.answer}]);}catch(e){setMessages([...next,{role:"assistant",content:e instanceof Error?e.message:"Erro da IA"}]);}finally{setChatBusy(false)}}
  const last=data?.last;
  return <main className="layout"><aside><div className="brand">✦ NEXUS AI</div><button onClick={()=>setTab("dashboard")} className={tab==="dashboard"?"active":""}>▦ Dashboard</button><button onClick={()=>setTab("chat")} className={tab==="chat"?"active":""}>✧ Chat IA</button><p className="sideinfo">Atualização automática a cada 5 minutos enquanto a página estiver aberta.</p><small>Ferramenta educacional · Sem execução de ordens</small></aside><section className="main"><header><div><small>MERCADO FINANCEIRO</small><h1>{tab==="dashboard"?"Visão geral":"Nexus AI Chat"}</h1></div><button onClick={()=>void load()}>{busy?"Atualizando…":"↻ Atualizar"}</button></header>
